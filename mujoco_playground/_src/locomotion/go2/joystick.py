@@ -244,6 +244,7 @@ class Joystick(go2_base.Go2Env):
     # state = self._reset_if_outside_bounds(state)
 
     motor_targets = self._default_pose + action * self._config.action_scale
+    #control go2 es por torque, se debe repensar linea anterior....
     data = mjx_env.step(
         self.mjx_model, state.data, motor_targets, self.n_substeps
     )
