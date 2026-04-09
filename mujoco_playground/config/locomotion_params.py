@@ -50,7 +50,7 @@ def brax_ppo_config(
       num_resets_per_eval=10,
   )
 
-  if env_name in ("Go1JoystickFlatTerrain", "Go1JoystickRoughTerrain"):
+  if env_name in ("Go1JoystickFlatTerrain", "Go2JoystickFlatTerrain","Go1JoystickRoughTerrain"):
     rl_config.num_timesteps = 200_000_000
     rl_config.num_evals = 10
     rl_config.network_factory = config_dict.create(
@@ -215,9 +215,10 @@ def rsl_rl_config(
       "BerkeleyHumanoidJoystickFlatTerrain",
       "G1Joystick",
       "Go1JoystickFlatTerrain",
+      "Go2JoystickFlatTerrain",
   ):
     rl_config.max_iterations = 1000
-  if env_name == "Go1JoystickFlatTerrain":
+  if env_name == "Go1JoystickFlatTerrain" or env_name=="Go2JoystickFlatTerrain":
     rl_config.algorithm.learning_rate = 3e-4
     rl_config.algorithm.schedule = "fixed"
 
