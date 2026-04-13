@@ -125,7 +125,6 @@
       <geom mesh="base_3" material="white" class="visual"/>
       <geom mesh="base_4" material="gray" class="visual"/>
 
-      <!-- creo aca esta el problema -->
       <geom class="collision" size="0.125 0.04 0.057" type="box"/>
       <geom class="collision" quat="1 0 1 0" pos="0 -0.04 0" size="0.058 0.125" type="cylinder"/>
       <geom class="collision" quat="1 0 1 0" pos="0 +0.04 0" size="0.058 0.125" type="cylinder"/>
@@ -140,6 +139,7 @@
         <geom mesh="hip_1" material="gray" class="visual"/>
         <geom class="hip_right1"/>
         <geom class="hip_right2"/>
+
         <body name="FR_thigh" pos="0 -0.08 0">
           <inertial pos="-0.00304722 0.019315 -0.0305004" quat="0.498237 0.505462 0.499245 0.497014" mass="0.678"
             diaginertia="0.00088403 0.000596003 0.000479967"/>
@@ -147,8 +147,10 @@
           <geom class="thigh1"/>
           <geom class="thigh2"/>
           <geom class="thigh3"/>
-          <geom mesh="hip_0" material="metal" class="visual" quat="4.63268e-05 1 0 0"/>
-          <geom mesh="hip_1" material="gray" class="visual" quat="4.63268e-05 1 0 0"/>
+          <!-- <geom mesh="hip_0" material="metal" class="visual" quat="4.63268e-05 1 0 0"/>
+          <geom mesh="hip_1" material="gray" class="visual" quat="4.63268e-05 1 0 0"/> -->
+          <geom mesh="thigh_mirror_0" material="metal" class="visual"/>
+          <geom mesh="thigh_mirror_1" material="gray" class="visual"/>
 
           <body name="FR_calf" pos="0 0 -0.213">
             <inertial pos="0.00629595 0.000622121 -0.141417" quat="0.703508 -0.00450087 0.00154099 0.710672"
@@ -193,6 +195,7 @@
             <geom mesh="calf_1" material="black" class="visual"/>
             <geom class="calf1"/>
             <geom class="calf2"/>
+            <geom pos="0 0 -0.213" mesh="foot" class="visual" material="black"/>
             <geom name="FL" class="foot"/>
             <site name="FL" pos="0 0 -0.213" type="sphere" size="0.023" group="5"/>
           </body>
