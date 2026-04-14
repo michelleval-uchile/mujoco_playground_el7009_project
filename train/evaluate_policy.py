@@ -1,4 +1,5 @@
 import os
+import time
 import json
 import functools
 import shutil
@@ -55,7 +56,9 @@ class PPOController:
 
     def get_joy_cmd(self):
 
-        return np.array([0.0, 1.0, 1.0])
+        #return np.array([1.0, 0.0, 1.0])
+        print(f"current cmd: {vel_cmd}")
+        return vel_cmd
 
 
     def get_observation(self, model, data):
@@ -80,18 +83,17 @@ class PPOController:
 
     def get_cmd(self, model, data):
        
-       key, rng = jax.random.split(self._optimizer_key)
+        key, rng = jax.random.split(self._optimizer_key)
        
-       self._counter += 1
-       if self._counter % self._n_substeps == 0:
+        self._counter += 1
+        if self._counter % self._n_substeps == 0:
            
-           obs = self.get_observation(model, data)
-           #obs = {"obs": obs.reshape(1, -1)}
-           pred_cmd = self.policy(obs, rng)[0]
-           print(f"THE PRED CMD: {pred_cmd}")
-           self._last_action = pred_cmd
-           data.ctrl[:] = pred_cmd * self._action_scale + self._default_angles
-           #here do the prediction
+            obs = self.get_observation(model, data)
+            #obs = {"obs": obs.reshape(1, -1)}
+            pred_cmd = self.policy(obs, rng)[0]
+            print(f"THE PRED CMD: {pred_cmd}")
+            self._last_action = pred_cmd
+            data.ctrl[:] = pred_cmd * self._action_scale + self._default_angles
 
 
 def load_callback(model=None, data=None):
@@ -107,7 +109,7 @@ def load_callback(model=None, data=None):
 
     ctrl_dt = 0.02
     sim_dt = 0.004
-    n_substeps = int(round(ctrl_dt / sim_dt))
+    n_substeps = 1 #int(round(ctrl_dt / sim_dt))
     model.opt.timestep = sim_dt
 
     checkpoint_path = Path("/root/EL7009_projects/go2_train_logs/000206438400")
@@ -124,6 +126,30 @@ def load_callback(model=None, data=None):
     return model, data
 
 
+#global vel_cmd 
+vel_cmd = np.array([0.0, 0.0, 0.0])
+def key_callback(keycode):
+    global vel_cmd
+    print("CALLBACK")
+    # Para teclas imprimibles (letras, números, etc.)
+    key_char = chr(keycode) if 32 <= keycode <= 126 else None
+    
+    # Control con flechas y letras
+    if key_char == 'w':
+        vel_cmd[0] = 1.0  # Adelante
+    elif key_char == 's':
+        vel_cmd[0] = -1.0  # Atrás
+    elif key_char == 'a':
+        vel_cmd[1] = 1.0  # Izquierda
+    elif key_char == 'd':
+        vel_cmd[1] = -1.0  # Derecha
+    elif key_char == 'l':
+        vel_cmd[2] = 1.0  # Rotar izquierda
+    elif key_char == 'r':
+        vel_cmd[2] = -1.0  # Rotar derecha
+    elif key_char == ' ':  # Barra espaciadora
+        vel_cmd = np.array([0.0, 0.0, 0.0])  # Reset
+
 
 if __name__ == "__main__":
 
@@ -133,7 +159,37 @@ if __name__ == "__main__":
     el archivo json con valiores null. 
     Deben eliminarse esas llaves con valor null. Brax no sabe manejarlas."""
 
-    policy = checkpoint.load_policy(path)
+    #policy = checkpoint.load_policy(path)
 
-    print("model loaded")
-    viewer.launch(loader=load_callback)
+    # print("model loaded")
+    # viewer.launch(loader=load_callback)
+    ctrl_dt = 0.02
+    sim_dt = 0.004
+    n_substeps = int(round(ctrl_dt / sim_dt))
+    checkpoint_path = Path("/root/EL7009_projects/go2_train_logs/000206438400")
+
+    m = mujoco.MjModel.from_xml_path(
+        go2_constants.FEET_ONLY_FLAT_TERRAIN_XML.as_posix(),
+        assets=get_assets())
+    d = mujoco.MjData(m)
+    
+    policy = PPOController( path_to_checkpoint=checkpoint_path.as_posix(),
+        default_angles=np.array(m.keyframe("home").qpos[7:]),
+        n_substeps=n_substeps,
+        action_scale=0.5,
+        vel_scale_x=1.5,
+        vel_scale_y=0.8,
+        vel_scale_rot=2 * np.pi)
+
+    with mujoco.viewer.launch_passive(m, d, key_callback=key_callback) as viewer:
+        while viewer.is_running() : 
+
+            start_step = time.time()            
+            policy.get_cmd(m, d)
+            mujoco.mj_step(m, d)
+            viewer.sync()
+            dt = time.time() - start_step
+
+            waiting_time = time_until_next_step = m.opt.timestep - dt
+            if time_until_next_step > 0:
+                time.sleep(waiting_time)
